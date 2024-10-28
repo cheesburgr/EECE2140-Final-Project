@@ -1,8 +1,11 @@
 import random
 
-
+word_list = [Animals, Majors, Food, Places, Movies]
 
 # chosen_word = random.choice(word_list)
+
+
+
 
 guessed_letters = set()
 
