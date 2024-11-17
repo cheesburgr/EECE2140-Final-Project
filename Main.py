@@ -2,32 +2,50 @@ import random
 import tkinter as tk
 from tkinter import messagebox
 
+
+class WordBank:
+    def __init__(self, words):
+        """Initialize the WordBank with a list of words."""
+        self.words = words # Sets the words that will be included in the bank
+
+    def get_random_word(self):
+        """Select and return a random word from the word bank."""
+        if not self.words:
+            return None  # Return None if the word bank is empty
+        return random.choice(self.words) #returns a random word from the word bank
+
 class HangmanGame:
-    def __init__(self, word_list):
+    def __init__(self):
         """Initialize the game with a list of possible words."""
-        self.word_list = word_list
-        self.word_to_guess = random.choice(self.word_list).upper()  # Selects a random word from the list
         self.guessed_letters = set()  # Set of letters guessed by the player
-        self.attempts_left = 6  # Number of attempts left
+        self.attempts_left = 6  # Number of attempts (hangman stages)
         self.correct_guesses = set()  # Set of correct guesses (letters that are in the word)
         
-    # Responsible for displaying the word with guessed letters and underscores    
+        
+        """Chooses a random word from category"""
+    def setcategory(self, bank):
+        if bank == "fruits":
+            self.word_to_guess = fruitsBank.get_random_word().upper()  
+        if bank == "places":
+            self.word_to_guess = placesBank.get_random_word().upper()  
+        if bank == "coding":
+            self.word_to_guess = codingBank.get_random_word().upper()
+        if bank == "all":
+            self.word_to_guess = allBank.get_random_word().upper()
+        
     def display_word(self):
+        """Display the current state of the word with underscores for unguessed letters."""
         display = ""
         for letter in self.word_to_guess:
             if letter in self.correct_guesses:
                 display += letter + " "
             else:
                 display += "_ "
-                
-        # The strip function removes any whitespaces present at the start and end
         return display.strip()
 
-    # Responsible for checking the guess and updating the stages of the game accordingly
     def make_guess(self, guess):
-        # To handle case insensitivity
-        
-        guess = guess.upper()  
+        """Make a guess, and update the game state accordingly."""
+        guess = guess.upper()  # Convert to uppercase to handle case insensitivity
         if len(guess) != 1 or not guess.isalpha():
             return False
         
@@ -40,17 +58,19 @@ class HangmanGame:
             self.correct_guesses.add(guess)
         else:
             self.attempts_left -= 1
-
+        
         return True
 
-    # Responsible for deciding whether the player has won or lost
     def game_status(self):
+        """Check if the game has been won or lost."""
         if self.attempts_left == 0:
             return "lose"
         if set(self.word_to_guess) == self.correct_guesses:
             return "win"
         return "continue"
     
+    
+        
     def hangman_stages(self):
         if self.attempts_left == 6:
             return '''
@@ -118,23 +138,48 @@ class HangmanGame:
         |   |
         O   |
        /|\  |
-       / \  |
+       /\   |
             |
       =========
         '''
-                       
-        
 
-# Responsible for handling the UI
+
 class HangmanUI:
-    def __init__(self, root, word_list):
-
+    def __init__(self, root):
+        """Initialize the UI and game logic."""
         self.root = root
         self.root.title("Hangman Game")
         
-        self.game = HangmanGame(word_list)
+        self.game = HangmanGame()
+        
+        """Category selection screen"""
+        self.pick_category_label = tk.Label(root, text="Pick a category:", font=("Helvetica", 14))
+        self.pick_category_label.pack(side = 'top')
+        
+        self.var = tk.IntVar()
+        self.btn1 = tk.Button(root, text = 'fruits', command =lambda: [self.game.setcategory("fruits"), self.var.set(1)]) 
+        self.btn1.pack(side = 'top')
+        self.btn2 = tk.Button(root, text = 'places', command =lambda: [self.game.setcategory("places"), self.var.set(1)]) 
+        self.btn2.pack(side = 'top')   
+        self.btn3 = tk.Button(root, text = 'coding', command =lambda: [self.game.setcategory("coding"), self.var.set(1)]) 
+        self.btn3.pack(side = 'top')   
+        self.btn4 = tk.Button(root, text = 'all', command =lambda: [self.game.setcategory("all"), self.var.set(1)]) 
+        self.btn4.pack(side = 'top')   
+        
+        # Waits until a button is pressed and then clears selection screen elements
+        self.btn1.wait_variable(self.var)
+        self.btn1.destroy()
+        self.btn2.destroy()
+        self.btn3.destroy()
+        self.btn4.destroy()
+        self.pick_category_label.destroy()
+        
 
         # UI Elements
+        self.wins = 0
+        self.wins_label = tk.Label(root, text=f"Wins: {self.wins}", font=("Helvetica", 14))
+        self.wins_label.pack(side = 'top')
+        
         self.word_label = tk.Label(root, text=self.game.display_word(), font=("Helvetica", 24))
         self.word_label.pack(pady=20)
 
@@ -187,6 +232,7 @@ class HangmanUI:
             # If the guess is invalid or already guessed, do nothing
             return
         
+        
         # Update the word label
         self.word_label.config(text=self.game.display_word())
 
@@ -206,6 +252,7 @@ class HangmanUI:
         status = self.game.game_status()
         if status == "win":
             messagebox.showinfo("Congratulations!", f"You guessed the word: {self.game.word_to_guess}")
+            self.wins += 1
             self.reset_game()
         elif status == "lose":
             messagebox.showinfo("Game Over", f"You lost! The word was: {self.game.word_to_guess}")
@@ -214,25 +261,59 @@ class HangmanUI:
     # Responsible for resetting the game 
     def reset_game(self):
         # Creates a new instance of the hangman game with default values
-        self.game = HangmanGame(words)
+        self.game = HangmanGame()
+        
+        
+        # Brings back the selection screen
+        self.pick_category_label = tk.Label(root, text="Pick a category:", font=("Helvetica", 14))
+        self.pick_category_label.pack(side = 'top')
+        self.var = tk.IntVar()
+        self.btn1 = tk.Button(root, text = 'fruits', command =lambda: [self.game.setcategory("fruits"), self.var.set(1)]) 
+        self.btn1.pack(side = 'top')
+        self.btn2 = tk.Button(root, text = 'places', command =lambda: [self.game.setcategory("places"), self.var.set(1)]) 
+        self.btn2.pack(side = 'top')   
+        self.btn3 = tk.Button(root, text = 'coding', command =lambda: [self.game.setcategory("coding"), self.var.set(1)]) 
+        self.btn3.pack(side = 'top')   
+        self.btn4 = tk.Button(root, text = 'all', command =lambda: [self.game.setcategory("all"), self.var.set(1)]) 
+        self.btn4.pack(side = 'top') 
+        
+        self.btn1.wait_variable(self.var)
+        self.btn1.destroy()
+        self.btn2.destroy()
+        self.btn3.destroy()
+        self.btn4.destroy()
+        self.pick_category_label.destroy()
+        
+        
+        
         self.word_label.config(text=self.game.display_word())
         self.attempts_label.config(text=f"Attempts Left: {self.game.attempts_left}")
         self.guessed_label.config(text="Guessed Letters: ")
+        self.wins_label.config(text=f"Wins: {self.wins}")
         
         # Re-enable letter buttons
         for button in self.letter_buttons.values():
             button.config(state=tk.NORMAL)
 
 
-
+# Example usage:
 if __name__ == "__main__":
-    words = ["python", "hangman", "development", "code", "programming"]
+    #categories
+    fruits = ["apple", "banana", "cherry", "date", "elderberry"]
+    coding = ["python", "psudeocode", "development", "code", "programming"]
+    places = ["allston", "fenway", "brookline", "cambridge", "boston"]
+
+    # Create wordbank instances for each category
+    fruitsBank = WordBank(fruits)
+    placesBank = WordBank(places)
+    codingBank = WordBank(coding)
+    allBank = WordBank(fruits + places + coding)
     
     # Create a Tkinter window
     root = tk.Tk()
 
     # Create an instance of HangmanUI
-    game_ui = HangmanUI(root, words)
+    game_ui = HangmanUI(root)
     
     # Start the Tkinter event loop
     root.mainloop()
